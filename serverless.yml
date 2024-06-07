@@ -112,14 +112,23 @@ resources:
           - AttributeName: id
             KeyType: HASH
     
+    # Create DynamoDB for Booking System
+    BookingTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: bookingSystem
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
     # Create Cognito User Pool
     CognitoUserPool:
       Type: AWS::Cognito::UserPool
       Properties:
-        AliasAttributes:
-          - email
-        UsernameConfiguration:
-          CaseSensitive: false
         AutoVerifiedAttributes:
           - email
         Policies:
@@ -133,7 +142,7 @@ resources:
           - AttributeDataType: String
             DeveloperOnlyAttribute: true
             Mutable: true
-            Name: userName
+            Name: profile
             NumberAttributeConstraints:
               MaxValue: '25'
               MinValue: '0'
@@ -142,23 +151,17 @@ resources:
               MaxLength: '55'
               MinLength: '0'
           - AttributeDataType: String
-            Mutable: true
-            Name: given_name
-            Required: true
-            StringAttributeConstraints:
-              MinLength: '1'
-          - AttributeDataType: String
-            Mutable: true
-            Name: family_name
-            Required: true
-            StringAttributeConstraints:
-              MinLength: '1'
-          - AttributeDataType: String
-            Mutable: true
             Name: email
+            Mutable: true
             Required: true
-            StringAttributeConstraints:
-              MinLength: '1'
+          - AttributeDataType: String
+            Name: given_name
+            Mutable: true
+            Required: true
+          - AttributeDataType: String
+            Name: family_name
+            Mutable: true
+            Required: true
           
     #  Create Cognito Web
     WebCognitoUserPoolClient:
@@ -169,7 +172,6 @@ resources:
         ExplicitAuthFlows:
           - ALLOW_USER_SRP_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
-        PreventUserExistenceErrors: ENABLED
     
     #  Create Cognito Server
     ServerCognitoUserPoolClient:
@@ -180,7 +182,6 @@ resources:
         ExplicitAuthFlows:
           - ALLOW_ADMIN_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
-        PreventUserExistenceErrors: ENABLED
 
     # Event Planner Group
     EventPlannerGroup:

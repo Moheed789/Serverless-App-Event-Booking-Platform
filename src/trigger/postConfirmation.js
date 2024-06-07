@@ -1,8 +1,9 @@
 import AWS from "aws-sdk";
 import middy from "@middy/core";
-import {jsonBodyParser} from "@middy/http-json-body-parser";
-import {errorHandler} from "@middy/http-error-handler";
+import httpJsonBodyParser from "@middy/http-json-body-parser";
+import hhtpErrorHandler from "@middy/http-error-handler";
 import { v4 as uuidv4 } from "uuid";
+import httpErrorHandler from "@middy/http-error-handler";
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.event_planner_table;
 const groupName = process.env.event_group_name;
@@ -38,6 +39,6 @@ const handler = async (event) => {
 
 export default {
   handler: middy(handler)
-  .use(jsonBodyParser())
-  .use(errorHandler())
+  .use(httpJsonBodyParser())
+  .use(httpErrorHandler())
 }

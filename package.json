@@ -16,6 +16,7 @@
     "@middy/http-error-handler": "^5.4.0",
     "@middy/http-json-body-parser": "^5.4.0",
     "aws-sdk": "^2.1633.0",
+    "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "serverless-export-env": "^2.2.0",
     "uuid": "^9.0.1"
