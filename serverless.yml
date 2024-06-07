@@ -1,0 +1,201 @@
+service: Serverless-event-booking-platform
+
+frameworkVersion: '3'
+
+# Provider
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  profile: Moheed
+
+  # IAM Role Statements
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
+        - arn:aws:dynamodb:us-east-1:654654320621:table/moheedTicketPurchaser
+    - Effect: Allow
+      Action: 
+        - cognito-idp:AdminAddUserToGroup
+      Resource: '*'
+
+  # Environment Variables 
+  environment:
+    event_data_table: eventData
+    event_group_name: eventPlanner
+
+# Functions
+functions:
+
+  # Event Planner Flow
+  addNewEvent:
+    handler: functions/event_planner/create.createEventPlanner
+    events:
+      - http:
+          path: /newevent
+          method: POST
+          cors: true
+  editEvent:
+    handler: functions/event_planner/update.updateEventPlanner
+    events:
+      - http:
+          path: /editevent/{id}
+          method: PUT
+          cors: true
+  deleteEvent:
+    handler: functions/event_planner/delete.deleteEventPlanner
+    events:
+      - http:
+          path: /deleteevent/{id}
+          method: DELETE
+          cors: true
+  listAllEvents:
+    handler: functions/event_planner/list.getEventPlanner
+    events:
+      - http:
+          path: /allevents
+          method: GET
+          cors: true
+
+  # Post Confirmation Flow
+  postFunc:
+    handler: src/trigger/postConfirmation.handler
+    events:
+      - cognitoUserPool:
+          pool: us-east-1_t7hWbpEzM
+          trigger: PostConfirmation
+
+# Resources
+resources:
+  Resources:
+
+    # Create DynamoDB for EventPlanner
+    EventPlannerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: moheedEventPlanner
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # Create DynamoDB for UserTicketPurchaser
+    UserTicketPurchaser:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: moheedTicketPurchaser
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # Create DynamoDB for Event Data
+    EventData:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: eventData
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    
+    # Create Cognito User Pool
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AliasAttributes:
+          - email
+        UsernameConfiguration:
+          CaseSensitive: false
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+        Schema:
+          - AttributeDataType: String
+            DeveloperOnlyAttribute: true
+            Mutable: true
+            Name: userName
+            NumberAttributeConstraints:
+              MaxValue: '25'
+              MinValue: '0'
+            Required: false
+            StringAttributeConstraints:
+              MaxLength: '55'
+              MinLength: '0'
+          - AttributeDataType: String
+            Mutable: true
+            Name: given_name
+            Required: true
+            StringAttributeConstraints:
+              MinLength: '1'
+          - AttributeDataType: String
+            Mutable: true
+            Name: family_name
+            Required: true
+            StringAttributeConstraints:
+              MinLength: '1'
+          - AttributeDataType: String
+            Mutable: true
+            Name: email
+            Required: true
+            StringAttributeConstraints:
+              MinLength: '1'
+          
+    #  Create Cognito Web
+    WebCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: client
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+    
+    #  Create Cognito Server
+    ServerCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: server
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_ADMIN_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    # Event Planner Group
+    EventPlannerGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: "eventPlanner"
+        UserPoolId: !Ref CognitoUserPool
+
+    # User Ticket Purchaser Group
+    UserTicketPurchaserGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: "userTicketPurchaser"
+        UserPoolId: !Ref CognitoUserPool
+
+# Plugins
+plugins:
+  - serverless-export-env
