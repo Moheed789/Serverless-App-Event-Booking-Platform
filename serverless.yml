@@ -25,8 +25,10 @@ provider:
 
   # Environment Variables 
   environment:
-    event_data_table: eventData
+    event_planner_table: moheedEventPlanner
     event_group_name: eventPlanner
+    user_ticket_purchaser_table: moheedTicketPurchaser
+    group_name: userTicketPurchaser
 
 # Functions
 functions:
@@ -63,11 +65,19 @@ functions:
 
   # Post Confirmation Flow
   postFunc:
-    handler: src/trigger/postConfirmation.handler
+    handler: src/trigger/postConfirmation.postConfirmationTrigger
     events:
       - cognitoUserPool:
-          pool: us-east-1_t7hWbpEzM
+          pool: us-east-1_SIvc79Ld9
           trigger: PostConfirmation
+    iamRoleStatements:
+      - Effect: Allow
+        Action: 
+          # - lambda:
+          - cognito-idp:PostConfirmation
+        Resource:
+          - arn:aws:lambda:us-east-1:654654320621:function:Serverless-event-booking-platform-dev-postFunc
+          - arn:aws:cognito-idp:us-east-1:654654320621:userpool/us-east-1_SIvc79Ld9
 
 # Resources
 resources:
@@ -200,3 +210,4 @@ resources:
 # Plugins
 plugins:
   - serverless-export-env
+  - serverless-iam-roles-per-function
