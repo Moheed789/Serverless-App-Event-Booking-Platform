@@ -45,8 +45,8 @@ const handler = async (event) => {
   };
 };
 
-export const updateEventPlanner = middy(handler)
+export const editEventPlanner = middy(handler)
   .use(httpJsonBodyParser())
   .use(httpErrorHandler());
 
-export default updateEventPlanner;
+export default editEventPlanner;

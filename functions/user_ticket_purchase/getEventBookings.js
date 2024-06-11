@@ -2,7 +2,7 @@ import AWS from "aws-sdk";
 import middy from "@middy/core";
 import httpErrorHandler from "@middy/http-error-handler";
 
-const tableName = process.env.event_data_table;
+const tableName = process.env.event_booking_table;
 
 const handler = async (event) => {
     const dynamodb = new AWS.DynamoDB.DocumentClient();
@@ -19,7 +19,7 @@ const handler = async (event) => {
     }    
 };
 
-export const getEventPlanner = middy(handler)
+export const getAllEventBookings = middy(handler)
   .use(httpErrorHandler());
 
-export default getEventPlanner;
+export default getAllEventBookings;

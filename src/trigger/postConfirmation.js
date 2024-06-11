@@ -1,28 +1,56 @@
 import AWS from "aws-sdk";
 import middy from "@middy/core";
-import { v4 as uuidv4 } from "uuid";
 import httpErrorHandler from "@middy/http-error-handler";
+import dayjs from "dayjs";
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const eventTableName = process.env.event_planner_table;
 const eventGroupName = process.env.event_group_name;
 const userTableName = process.env.user_ticket_purchaser_table;
-const userGroupName = process.env.user_ticket_purchaser_group_name;
-const profile = "eventplanner";
+const userGroupName = process.env.group_name;
 
 const handler = async (event) => {
   console.log("event", JSON.stringify(event));
-  const id = uuidv4();
+  const profile = "userTicketPurchaser";
+  const currentDate = dayjs().toISOString();
   try {
-    const userCreate = {
-      id,
+    const eventCreate = {
+      id: event.request.userAttributes.sub,
       name: event.userName,
-      fatherName: event.request.userAttributes.family_name,
-      email: event.request.userAttributes.email
+      firstName: event.request.userAttributes.given_name,
+      lastName: event.request.userAttributes.family_name,
+      email: event.request.userAttributes.email,
+      profile_status: 'incomplete',
+      phone_number: '',
+      company_name: '',
+      bio: '',
+      website: '',
+      social_media: '',
+      event_planned: event.request.userAttributes.given_name,
+      rating: '',
+      reviews: '',
+      createdAt: currentDate,
+      updatedAt: currentDate
     };
-    if (profile === "eventplanner") {
+    const userCreate = {
+      id: event.request.userAttributes.sub,
+      name: event.userName,
+      firstName: event.request.userAttributes.given_name,
+      lastName: event.request.userAttributes.family_name,
+      email: event.request.userAttributes.email,
+      phone_number: '',
+      tickets_bought: '',
+      ticket_ids: '',
+      payment_information: '',
+      event_details: '',
+      purchase_date: '',
+      status: '',
+      createdAt: currentDate,
+      updatedAt: currentDate
+    };
+    if(profile === "eventplanner") {
       await dynamodb.put({
         TableName: eventTableName,
-        Item: userCreate
+        Item: eventCreate
       }).promise();
       const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
       const params = {

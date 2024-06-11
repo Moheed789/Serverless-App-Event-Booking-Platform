@@ -3,7 +3,7 @@ import middy from "@middy/core";
 import httpErrorHandler from "@middy/http-error-handler";
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const tableName = process.env.event_data_table;
+const tableName = process.env.event_booking_table;
 
 const handler = async (event) => {
     console.log("event", JSON.stringify(event))
@@ -19,7 +19,7 @@ const handler = async (event) => {
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: 'Event deleted successfully' })
+            body: JSON.stringify({ message: 'Event Booking deleted successfully' })
         };
     } catch (error) {
         console.error('Error:', error);
@@ -27,7 +27,7 @@ const handler = async (event) => {
     }
 };
 
-export const deleteEventPlanner = middy(handler)
+export const removeEventBooking = middy(handler)
   .use(httpErrorHandler());
 
-export default deleteEventPlanner;
+export default removeEventBooking;

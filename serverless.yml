@@ -10,58 +10,93 @@ provider:
   region: us-east-1
   profile: Moheed
 
-  # IAM Role Statements
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:*
-      Resource:
-        - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
-        - arn:aws:dynamodb:us-east-1:654654320621:table/moheedTicketPurchaser
-    - Effect: Allow
-      Action: 
-        - cognito-idp:AdminAddUserToGroup
-      Resource: '*'
-
-  # Environment Variables 
-  environment:
-    event_planner_table: moheedEventPlanner
-    event_group_name: eventPlanner
-    user_ticket_purchaser_table: moheedTicketPurchaser
-    group_name: userTicketPurchaser
-
 # Functions
 functions:
-
   # Event Planner Flow
+
+  # Add Event Data Lambda Function
   addNewEvent:
-    handler: functions/event_planner/create.createEventPlanner
+    handler: functions/event_planner/createEventPlanner.addEventPlanner
     events:
       - http:
           path: /newevent
           method: POST
           cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
+    
+    # Environment Variables 
+    environment:
+      event_data_table: eventData
+  
+  # Update Event Data Lambda Function
   editEvent:
-    handler: functions/event_planner/update.updateEventPlanner
+    handler: functions/event_planner/updateEventPlanner.editEventPlanner
     events:
       - http:
           path: /editevent/{id}
           method: PUT
           cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
+    
+    # Environment Variables 
+    environment:
+      event_data_table: eventData
+
+  # Delete Event Data Lambda Function
   deleteEvent:
-    handler: functions/event_planner/delete.deleteEventPlanner
+    handler: functions/event_planner/deleteEventPlanner.removeEventPlanner
     events:
       - http:
           path: /deleteevent/{id}
           method: DELETE
           cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
+    
+    # Environment Variables 
+    environment:
+      event_data_table: eventData
+
+  # List of All Event Data Lambda Function
   listAllEvents:
-    handler: functions/event_planner/list.getEventPlanner
+    handler: functions/event_planner/getEventPlanner.getAllEventPlanner
     events:
       - http:
           path: /allevents
           method: GET
           cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:ScanItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
+    
+    # Environment Variables 
+    environment:
+      event_data_table: eventData
 
   # Post Confirmation Flow
   postFunc:
@@ -70,14 +105,111 @@ functions:
       - cognitoUserPool:
           pool: us-east-1_SIvc79Ld9
           trigger: PostConfirmation
+
+    # IAM Role Statements
     iamRoleStatements:
       - Effect: Allow
         Action: 
-          # - lambda:
-          - cognito-idp:PostConfirmation
+          - cognito-idp:AdminAddUserToGroup
+          - cognito-idp:AmazonCognitoPowerUser
+          - dynamodb:PutItem
         Resource:
-          - arn:aws:lambda:us-east-1:654654320621:function:Serverless-event-booking-platform-dev-postFunc
           - arn:aws:cognito-idp:us-east-1:654654320621:userpool/us-east-1_SIvc79Ld9
+          - arn:aws:dynamodb:us-east-1:654654320621:table/moheedTicketPurchaser
+          - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+      event_group_name: eventPlanner
+      user_ticket_purchaser_table: moheedTicketPurchaser
+      group_name: userTicketPurchaser
+
+  # User Ticket Purchase Flow
+
+  # Add Event Data Lambda Function
+  addEventBooking:
+    handler: functions/user_ticket_purchase/createEventBooking.addEventBooking
+    events:
+      - http:
+          path: /neweventbooking
+          method: POST
+          cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+    
+    # Environment Variables 
+    environment:
+      event_booking_table: bookingSystem
+  
+  # Update Event Data Lambda Function
+  editEventBooking:
+    handler: functions/user_ticket_purchase/updateEventBooking.updateEventBookings
+    events:
+      - http:
+          path: /editeventbooking/{id}
+          method: PUT
+          cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+    
+    # Environment Variables 
+    environment:
+      event_booking_table: bookingSystem
+
+  # Delete Event Data Lambda Function
+  eventBooking:
+    handler: functions/user_ticket_purchase/deleteEventBooking.removeEventBooking
+    events:
+      - http:
+          path: /deleteeventbooking/{id}
+          method: DELETE
+          cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+    
+    # Environment Variables 
+    environment:
+      event_booking_table: bookingSystem
+
+  # List of All Event Data Lambda Function
+  allEventBooking:
+    handler: functions/user_ticket_purchase/getEventBookings.getAllEventBookings
+    events:
+      - http:
+          path: /alleventbookings
+          method: GET
+          cors: true
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:ScanItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+    
+    # Environment Variables 
+    environment:
+      event_booking_table: bookingSystem
 
 # Resources
 resources:
@@ -127,6 +259,19 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: bookingSystem
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # Create DynamoDB for Booking
+    eventBookingTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: eventBooking
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
