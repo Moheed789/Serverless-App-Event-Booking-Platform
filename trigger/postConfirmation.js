@@ -10,8 +10,9 @@ const userGroupName = process.env.group_name;
 
 const handler = async (event) => {
   console.log("event", JSON.stringify(event));
-  const profile = "userTicketPurchaser";
-  const currentDate = dayjs().toISOString();
+  const profile = "eventplanner";
+  const currentDateTime = dayjs().toISOString();
+  const currentDate = dayjs().format("DD-MM-YYYY");
   try {
     const eventCreate = {
       id: event.request.userAttributes.sub,
@@ -19,7 +20,7 @@ const handler = async (event) => {
       firstName: event.request.userAttributes.given_name,
       lastName: event.request.userAttributes.family_name,
       email: event.request.userAttributes.email,
-      profile_status: 'incomplete',
+      profile_status: '',
       phone_number: '',
       company_name: '',
       bio: '',
@@ -28,8 +29,8 @@ const handler = async (event) => {
       event_planned: event.request.userAttributes.given_name,
       rating: '',
       reviews: '',
-      createdAt: currentDate,
-      updatedAt: currentDate
+      createdAt: currentDateTime,
+      updatedAt: currentDateTime
     };
     const userCreate = {
       id: event.request.userAttributes.sub,
@@ -42,10 +43,10 @@ const handler = async (event) => {
       ticket_ids: '',
       payment_information: '',
       event_details: '',
-      purchase_date: '',
+      purchase_date: currentDate,
       status: '',
-      createdAt: currentDate,
-      updatedAt: currentDate
+      createdAt: currentDateTime,
+      updatedAt: currentDateTime
     };
     if(profile === "eventplanner") {
       await dynamodb.put({

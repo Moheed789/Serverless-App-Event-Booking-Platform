@@ -19,9 +19,13 @@ functions:
     handler: functions/event_planner/createEventPlanner.addEventPlanner
     events:
       - http:
-          path: /newevent
+          path: /create-event-planner
           method: POST
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -40,9 +44,13 @@ functions:
     handler: functions/event_planner/updateEventPlanner.editEventPlanner
     events:
       - http:
-          path: /editevent/{id}
+          path: /update-event-planner/{id}
           method: PUT
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -61,9 +69,13 @@ functions:
     handler: functions/event_planner/deleteEventPlanner.removeEventPlanner
     events:
       - http:
-          path: /deleteevent/{id}
+          path: /delete-event-planner/{id}
           method: DELETE
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -82,15 +94,20 @@ functions:
     handler: functions/event_planner/getEventPlanner.getAllEventPlanner
     events:
       - http:
-          path: /allevents
+          path: /get-event-planner
           method: GET
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
     
     # IAM Role Statements
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:ScanItem
+          - dynamodb:Scan
         Resource:
           - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
     
@@ -98,9 +115,34 @@ functions:
     environment:
       event_data_table: eventData
 
+  # Get One Event Planner Lambda Function
+  getEventPlanner:
+    handler: trigger/getOneEventPlanner.getEventPlanner
+    events:
+      - http:
+          path: /get-one-event-planner
+          method: GET
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+
   # Post Confirmation Flow
   postFunc:
-    handler: src/trigger/postConfirmation.postConfirmationTrigger
+    handler: trigger/postConfirmation.postConfirmationTrigger
     events:
       - cognitoUserPool:
           pool: us-east-1_SIvc79Ld9
@@ -135,6 +177,10 @@ functions:
           path: /neweventbooking
           method: POST
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -156,6 +202,10 @@ functions:
           path: /editeventbooking/{id}
           method: PUT
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -177,6 +227,10 @@ functions:
           path: /deleteeventbooking/{id}
           method: DELETE
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -198,6 +252,10 @@ functions:
           path: /alleventbookings
           method: GET
           cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
     
     # IAM Role Statements
     iamRoleStatements:
@@ -326,16 +384,6 @@ resources:
         UserPoolId: !Ref CognitoUserPool
         ExplicitAuthFlows:
           - ALLOW_USER_SRP_AUTH
-          - ALLOW_REFRESH_TOKEN_AUTH
-    
-    #  Create Cognito Server
-    ServerCognitoUserPoolClient:
-      Type: AWS::Cognito::UserPoolClient
-      Properties:
-        ClientName: server
-        UserPoolId: !Ref CognitoUserPool
-        ExplicitAuthFlows:
-          - ALLOW_ADMIN_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
 
     # Event Planner Group
