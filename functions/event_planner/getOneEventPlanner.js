@@ -6,19 +6,19 @@ const tableName = process.env.event_planner_table;
 
 const handler = async (event) => {
     console.log("event", JSON.stringify(event));
-    const eventPlannerId = event.pathParameters;
+    const eventId = event.queryStringParameters.id;
     try {
         const params = {
             TableName: tableName,
-            key: {
-                id: eventPlannerId
+            Key: {
+                id: eventId
             }
         };
-            const res = await dynamodb.get(params).promise();
-            return {
-                statusCode: 200,
-                body: JSON.stringify(res.Item)
-            };
+        const res = await dynamodb.get(params).promise();
+        return {
+            statusCode: 200,
+            body: JSON.stringify(res.Item)
+        };
     } catch (err) {
         console.log('Error', err);
         throw err

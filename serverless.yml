@@ -117,7 +117,7 @@ functions:
 
   # Get One Event Planner Lambda Function
   getEventPlanner:
-    handler: trigger/getOneEventPlanner.getEventPlanner
+    handler: functions/event_planner/getOneEventPlanner.getEventPlanner
     events:
       - http:
           path: /get-one-event-planner
@@ -140,12 +140,37 @@ functions:
     environment:
       event_planner_table: moheedEventPlanner
 
+  # Update event Planner user Lambda Function
+  updateEvent:
+    handler: functions/event_planner/editEventPlannerUser.eventPlannerUser
+    events:
+      - http:
+          path: /edit-event-planner
+          method: PUT
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+
   # Post Confirmation Flow
   postFunc:
     handler: trigger/postConfirmation.postConfirmationTrigger
     events:
       - cognitoUserPool:
-          pool: us-east-1_SIvc79Ld9
+          pool: us-east-1_Gdlj8Z0v6
           trigger: PostConfirmation
 
     # IAM Role Statements
@@ -156,7 +181,7 @@ functions:
           - cognito-idp:AmazonCognitoPowerUser
           - dynamodb:PutItem
         Resource:
-          - arn:aws:cognito-idp:us-east-1:654654320621:userpool/us-east-1_SIvc79Ld9
+          - arn:aws:cognito-idp:us-east-1:654654320621:userpool/us-east-1_Gdlj8Z0v6
           - arn:aws:dynamodb:us-east-1:654654320621:table/moheedTicketPurchaser
           - arn:aws:dynamodb:us-east-1:654654320621:table/moheedEventPlanner
     
@@ -344,6 +369,8 @@ resources:
       Properties:
         AutoVerifiedAttributes:
           - email
+        UsernameAttributes:
+          - email
         Policies:
           PasswordPolicy:
             MinimumLength: 8
@@ -352,17 +379,6 @@ resources:
             RequireNumbers: true
             RequireSymbols: true
         Schema:
-          - AttributeDataType: String
-            DeveloperOnlyAttribute: true
-            Mutable: true
-            Name: profile
-            NumberAttributeConstraints:
-              MaxValue: '25'
-              MinValue: '0'
-            Required: false
-            StringAttributeConstraints:
-              MaxLength: '55'
-              MinLength: '0'
           - AttributeDataType: String
             Name: email
             Mutable: true
