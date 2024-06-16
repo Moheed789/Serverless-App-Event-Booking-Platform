@@ -14,107 +14,6 @@ provider:
 functions:
   # Event Planner Flow
 
-  # Add Event Data Lambda Function
-  addNewEvent:
-    handler: functions/event_planner/createEventPlanner.addEventPlanner
-    events:
-      - http:
-          path: /create-event-planner
-          method: POST
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:PutItem
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
-    
-    # Environment Variables 
-    environment:
-      event_data_table: eventData
-  
-  # Update Event Data Lambda Function
-  editEvent:
-    handler: functions/event_planner/updateEventPlanner.editEventPlanner
-    events:
-      - http:
-          path: /update-event-planner/{id}
-          method: PUT
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:UpdateItem
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
-    
-    # Environment Variables 
-    environment:
-      event_data_table: eventData
-
-  # Delete Event Data Lambda Function
-  deleteEvent:
-    handler: functions/event_planner/deleteEventPlanner.removeEventPlanner
-    events:
-      - http:
-          path: /delete-event-planner/{id}
-          method: DELETE
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:DeleteItem
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
-    
-    # Environment Variables 
-    environment:
-      event_data_table: eventData
-
-  # List of All Event Data Lambda Function
-  listAllEvents:
-    handler: functions/event_planner/getEventPlanner.getAllEventPlanner
-    events:
-      - http:
-          path: /get-event-planner
-          method: GET
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:Scan
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/eventData
-    
-    # Environment Variables 
-    environment:
-      event_data_table: eventData
-
   # Get One Event Planner Lambda Function
   getEventPlanner:
     handler: functions/event_planner/getOneEventPlanner.getEventPlanner
@@ -192,107 +91,57 @@ functions:
       user_ticket_purchaser_table: moheedTicketPurchaser
       group_name: userTicketPurchaser
 
-  # User Ticket Purchase Flow
+  # Event Planner Create For Events
 
-  # Add Event Data Lambda Function
-  addEventBooking:
-    handler: functions/user_ticket_purchase/createEventBooking.addEventBooking
+  # Create Event Planner Data Function
+  createEventData:
+    handler: functions/event_planner_data/createEvent.addEvents
     events:
       - http:
-          path: /neweventbooking
+          path: /create-event
           method: POST
           cors: true
           authorizer:
               name: CognitoAuthorizer
               type: COGNITO_USER_POOLS
               arn: !GetAtt CognitoUserPool.Arn
-    
+
     # IAM Role Statements
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
         Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
     
-    # Environment Variables 
+    # Environment Variables
     environment:
-      event_booking_table: bookingSystem
-  
-  # Update Event Data Lambda Function
-  editEventBooking:
-    handler: functions/user_ticket_purchase/updateEventBooking.updateEventBookings
-    events:
-      - http:
-          path: /editeventbooking/{id}
-          method: PUT
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:UpdateItem
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
-    
-    # Environment Variables 
-    environment:
-      event_booking_table: bookingSystem
+      events_table_name: eventPlannerData
 
-  # Delete Event Data Lambda Function
-  eventBooking:
-    handler: functions/user_ticket_purchase/deleteEventBooking.removeEventBooking
+  # Get Event Planner Data Function
+  getEventData:
+    handler: functions/event_planner_data/getOneEvent.getEvent
     events:
       - http:
-          path: /deleteeventbooking/{id}
-          method: DELETE
-          cors: true
-          authorizer:
-              name: CognitoAuthorizer
-              type: COGNITO_USER_POOLS
-              arn: !GetAtt CognitoUserPool.Arn
-    
-    # IAM Role Statements
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:DeleteItem
-        Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
-    
-    # Environment Variables 
-    environment:
-      event_booking_table: bookingSystem
-
-  # List of All Event Data Lambda Function
-  allEventBooking:
-    handler: functions/user_ticket_purchase/getEventBookings.getAllEventBookings
-    events:
-      - http:
-          path: /alleventbookings
+          path: /get-events
           method: GET
           cors: true
           authorizer:
               name: CognitoAuthorizer
               type: COGNITO_USER_POOLS
               arn: !GetAtt CognitoUserPool.Arn
-    
+
     # IAM Role Statements
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:ScanItem
+          - dynamodb:Scan
         Resource:
-          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingSystem
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
     
-    # Environment Variables 
+    # Environment Variables
     environment:
-      event_booking_table: bookingSystem
+      events_table_name: eventPlannerData
 
 # Resources
 resources:
@@ -324,44 +173,27 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    # Create DynamoDB for Event Data
-    EventData:
+    # Create DynamoDB for Event Planner Create Events
+    EventsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: eventData
+        TableName: eventPlannerData
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: eventId
             AttributeType: S
+          - AttributeName: 'userId'
+            AttributeType: 'S'
         KeySchema:
-          - AttributeName: id
+          - AttributeName: eventId
             KeyType: HASH
-    
-    # Create DynamoDB for Booking System
-    BookingTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: bookingSystem
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-
-    # Create DynamoDB for Booking
-    eventBookingTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: eventBooking
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: 'event-planner-index'
+            KeySchema:
+              - AttributeName: 'userId'
+                KeyType: 'HASH'
+            Projection:
+              ProjectionType: 'ALL'
 
     # Create Cognito User Pool
     CognitoUserPool:

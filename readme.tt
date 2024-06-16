@@ -1,0 +1,23 @@
+
+
+module.exports.deleteEvent = async (event) => {
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      id: event.pathParameters.id,
+    },
+  };
+
+  try {
+    await dynamoDb.delete(params).promise();
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Event deleted successfully' }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Could not delete event' }),
+    };
+  }
+};
