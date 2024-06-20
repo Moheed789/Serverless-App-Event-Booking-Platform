@@ -1,49 +1,55 @@
 import AWS from "aws-sdk";
-import middy from "@middy/core";
 import dayjs from "dayjs";
+import middy from "@middy/core";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 import httpErrorHandler from "@middy/http-error-handler";
 
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const tableName = process.env.events_table_name;
-
 const handler = async (event) => {
+    console.log("event", event);
     const dynamodb = new AWS.DynamoDB.DocumentClient();
-    const {name, location, country, city } = event.body;
-    const eventId = event.queryStringPathParameters?.eventId;
+    const tableName = process.env.events_table_name;
+    const { eventName, location, country, city, date, time } = event.body;
 
     const currentDate = dayjs().format('DD-MM-YYYY');
     const currentTime = dayjs().format('HH:mm:ss');
 
-    await dynamodb.update({
-        TableName: tableName,
-        Key: {
-            id: eventId,
-        },
-        UpdateExpression: 'set #title = :title, #description = :description, #date = :date, #time = :time, #venue = :venue',
-        ExpressionAttributeNames: {
-            '#title': 'title',
-            '#description': 'description',
-            '#date': 'date',
-            '#time': 'time',
-            '#venue': 'venue',
-        },
-        ExpressionAttributeValues: {
-            ':title': title,
-            ':description': description,
-            ':date': date || currentDate,
-            ':time': time || currentTime,
-            ':venue': venue,
-        },
-        ReturnValues: "ALL_NEW",
-    }).promise();
+    const eventId = event.pathParameters?.eventId;
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify({
-            message: "Event Edit Successfully",
-        }),
-    };
+    try {
+        const result = await dynamodb.update({
+            TableName: tableName,
+            Key: { eventId },
+            UpdateExpression: 'set #eventName = :eventName, #location = :location, #country = :country, #city = :city, #date = :date, #time = :time',
+            ExpressionAttributeNames: {
+                '#eventName': 'eventName',
+                '#location': 'location',
+                '#country': 'country',
+                '#city': 'city',
+                '#date': 'date',
+                '#time': 'time',
+            },
+            ExpressionAttributeValues: {
+                ':eventName': eventName,
+                ':location': location,
+                ':country': country,
+                ':city': city,
+                ':date': currentDate || date,
+                ':time': currentTime || time,
+            },
+            ReturnValues: "ALL_NEW",
+        }).promise();
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                message: "Event Edit Successfully",
+                updatedEvent: result.Attributes,
+            }),
+        };
+    } catch (error) {
+        console.error(error);
+        throw error
+    }
 };
 
 export const editEventPlanner = middy(handler)

@@ -123,7 +123,7 @@ functions:
     handler: functions/event_planner_data/getOneEvent.getEvent
     events:
       - http:
-          path: /get-events
+          path: /get-event
           method: GET
           cors: true
           authorizer:
@@ -135,7 +135,59 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:Scan
+          - dynamodb:Query
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData/index/event-planner-index
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+      index_name: event-planner-index
+
+  # Update Event Planner Data Function
+  updateEventData:
+    handler: functions/event_planner_data/updateEvent.editEventPlanner
+    events:
+      - http:
+          path: /edit-event/{eventId}
+          method: PUT
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+  # Delete Event Planner Data Function
+  deleteEventData:
+    handler: functions/event_planner_data/deleteEvent.deleteEventItem
+    events:
+      - http:
+          path: /delete-event/{eventId}
+          method: DELETE
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
         Resource:
           - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
     
@@ -182,18 +234,18 @@ resources:
         AttributeDefinitions:
           - AttributeName: eventId
             AttributeType: S
-          - AttributeName: 'userId'
-            AttributeType: 'S'
+          - AttributeName: eventPlannerId
+            AttributeType: S
         KeySchema:
           - AttributeName: eventId
             KeyType: HASH
         GlobalSecondaryIndexes:
-          - IndexName: 'event-planner-index'
+          - IndexName: event-planner-index
             KeySchema:
-              - AttributeName: 'userId'
-                KeyType: 'HASH'
+              - AttributeName: eventPlannerId
+                KeyType: HASH
             Projection:
-              ProjectionType: 'ALL'
+              ProjectionType: ALL
 
     # Create Cognito User Pool
     CognitoUserPool:

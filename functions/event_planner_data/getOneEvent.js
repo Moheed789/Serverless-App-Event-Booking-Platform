@@ -4,25 +4,40 @@ import httpErrorHandler from "@middy/http-error-handler";
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.events_table_name;
+const indexName = process.env.index_name;
 
 const handler = async (event) => {
-    const params = {
-        TableName: tableName
-    };
+    console.log('Event', event);
+
+    const userId = event.queryStringParameters.eventPlannerId;
 
     try {
-        const result = await dynamodb.scan(params).promise();
+        const params = {
+            TableName: tableName,
+            IndexName: indexName,
+            KeyConditionExpression: "#eventPlannerId = :eventPlannerIdValue",
+            ExpressionAttributeNames: {
+                "#eventPlannerId": 'eventPlannerId',
+            },
+            ExpressionAttributeValues: {
+                ":eventPlannerIdValue": userId,
+            }
+        };
+
+        const res = await dynamodb.query(params).promise();
+    
         return {
             statusCode: 200,
-            body: JSON.stringify(result),
+            body: JSON.stringify(res.Items)
         };
+    
     } catch (error) {
-        console.log("error", error);
+        console.error("Error:", error);
         throw error;
-    }
+    }    
 };
 
 export const getEvent = middy(handler)
-    .use(httpErrorHandler());
+.use(httpErrorHandler());
 
 export default getEvent;
