@@ -95,7 +95,7 @@ functions:
 
   # Create Event Planner Data Function
   createEventData:
-    handler: functions/event_planner_data/createEvent.addEvents
+    handler: functions/event_data/createEvent.addEvents
     events:
       - http:
           path: /create-event
@@ -120,7 +120,7 @@ functions:
 
   # Get Event Planner Data Function
   getEventData:
-    handler: functions/event_planner_data/getOneEvent.getEvent
+    handler: functions/event_data/getOneEvent.getEvent
     events:
       - http:
           path: /get-event
@@ -147,7 +147,7 @@ functions:
 
   # Update Event Planner Data Function
   updateEventData:
-    handler: functions/event_planner_data/updateEvent.editEventPlanner
+    handler: functions/event_data/updateEvent.editEventPlanner
     events:
       - http:
           path: /edit-event/{eventId}
@@ -172,7 +172,7 @@ functions:
 
   # Delete Event Planner Data Function
   deleteEventData:
-    handler: functions/event_planner_data/deleteEvent.deleteEventItem
+    handler: functions/event_data/deleteEvent.deleteEventItem
     events:
       - http:
           path: /delete-event/{eventId}
