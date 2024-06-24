@@ -1,6 +1,7 @@
 import AWS from "aws-sdk";
 import middy from "@middy/core";
 import httpErrorHandler from "@middy/http-error-handler";
+
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.event_planner_table;
 
@@ -15,17 +16,22 @@ const handler = async (event) => {
             }
         };
         const res = await dynamodb.get(params).promise();
-        return {
-            statusCode: 200,
-            body: JSON.stringify(res.Item)
-        };
+        if (res && res.Item) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify(res.Item)
+            };
+        } else {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({ message: "User not found" })
+            };
+        }
     } catch (err) {
         console.log('Error', err);
-        throw err
+        throw new Error("Internal Server Error");
     }
 };
 
 export const getEventPlanner = middy(handler)
     .use(httpErrorHandler());
-
-export default getEventPlanner;

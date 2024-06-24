@@ -14,7 +14,7 @@ provider:
 functions:
   # Event Planner Flow
 
-  # Get One Event Planner Lambda Function
+  # Get One Event Planner
   getEventPlanner:
     handler: functions/event_planner/getOneEventPlanner.getEventPlanner
     events:
@@ -39,7 +39,7 @@ functions:
     environment:
       event_planner_table: moheedEventPlanner
 
-  # Update event Planner user Lambda Function
+  # Update Event Planner using by userId 
   updateEvent:
     handler: functions/event_planner/editEventPlannerUser.eventPlannerUser
     events:
@@ -91,9 +91,9 @@ functions:
       user_ticket_purchaser_table: moheedTicketPurchaser
       group_name: userTicketPurchaser
 
-  # Event Planner Create For Events
+  # Events Flow with CRUD Operation
 
-  # Create Event Planner Data Function
+  # Create Event
   createEventData:
     handler: functions/event_data/createEvent.addEvents
     events:
@@ -118,7 +118,7 @@ functions:
     environment:
       events_table_name: eventPlannerData
 
-  # Get Event Planner Data Function
+  # Get Event using by GSI
   getEventData:
     handler: functions/event_data/getOneEvent.getEvent
     events:
@@ -136,6 +136,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
+          - dynamodb:Scan
         Resource:
           - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData
           - arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData/index/event-planner-index
@@ -145,7 +146,7 @@ functions:
       events_table_name: eventPlannerData
       index_name: event-planner-index
 
-  # Update Event Planner Data Function
+  # Update Event using by eventId
   updateEventData:
     handler: functions/event_data/updateEvent.editEventPlanner
     events:
@@ -170,7 +171,7 @@ functions:
     environment:
       events_table_name: eventPlannerData
 
-  # Delete Event Planner Data Function
+  # Delete Event using by eventId
   deleteEventData:
     handler: functions/event_data/deleteEvent.deleteEventItem
     events:
@@ -194,12 +195,39 @@ functions:
     # Environment Variables
     environment:
       events_table_name: eventPlannerData
+  
+  # Booking Ticket System Flow
+
+  # Update booking ticket
+  createBooking:
+    handler: functions/booking_system/booking_seat.bookTickets
+    events:
+      - http:
+          path: /create-bookingTicket
+          method: POST
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource:
+          - arn:aws:dynamodb:us-east-1:654654320621:table/bookingTicketSystem
+    
+    # Environment Variables
+    environment:
+      tickets_table_name: bookingTicketSystem
 
 # Resources
 resources:
   Resources:
 
-    # Create DynamoDB for EventPlanner
+    # Create DynamoDB Table for Event Planner
     EventPlannerTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -212,7 +240,7 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    # Create DynamoDB for UserTicketPurchaser
+    # Create DynamoDB Table for User Ticket Buyer
     UserTicketPurchaser:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -225,7 +253,7 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-    # Create DynamoDB for Event Planner Create Events
+    # Create DynamoDB Table for Event Data
     EventsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -246,6 +274,19 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+
+    # Create DynamoDB Table for Booking Ticket
+    BookingTicket:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: bookingTicketSystem
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ticketId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ticketId
+            KeyType: HASH
 
     # Create Cognito User Pool
     CognitoUserPool:
@@ -276,7 +317,7 @@ resources:
             Mutable: true
             Required: true
           
-    #  Create Cognito Web
+    #  Create Cognito Client
     WebCognitoUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
@@ -293,7 +334,7 @@ resources:
         GroupName: "eventPlanner"
         UserPoolId: !Ref CognitoUserPool
 
-    # User Ticket Purchaser Group
+    # User Ticket Buyer Group
     UserTicketPurchaserGroup:
       Type: AWS::Cognito::UserPoolGroup
       Properties:

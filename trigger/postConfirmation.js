@@ -77,11 +77,11 @@ const handler = async (event) => {
       console.log('User added to group successfully.');
       return event
     } else {
-      throw err;
+      throw new Error("Invalid profile type");
     }
   } catch (err) {
-    console.error('Error', err)
-    throw err;
+    console.error('Error:', err.message);
+    throw new Error('An error occurred during the post-confirmation process');
   }
 };
 

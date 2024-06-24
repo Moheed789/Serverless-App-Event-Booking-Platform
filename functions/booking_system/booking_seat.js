@@ -7,22 +7,21 @@ import httpErrorHandler from "@middy/http-error-handler";
 const handler = async (event) => {
     console.log("Event", event);
     const dynamodb = new AWS.DynamoDB.DocumentClient();
-    const tableName = process.env.events_table_name;
-    const { eventName, location, country, city, time, date } = event.body;
+    const ticketsTableName = process.env.tickets_table_name;
     const userId = event.requestContext.authorizer.claims.sub;
-    const eventId = uuidv4();
+    const { eventId, quantity, totalPrice, bookingTime } = event.body;
+    const ticketId = uuidv4();
+    const currentDate = new Date().toISOString();
 
     const params = {
-        TableName: tableName,
+        TableName: ticketsTableName,
         Item: {
             eventId: eventId,
-            eventPlannerId: userId,
-            eventName: eventName,
-            location: location,
-            country: country,
-            city: city,
-            date: date,
-            time: time,
+            ticketId: ticketId,
+            userId: userId,
+            quantity: quantity,
+            totalPrice: totalPrice,
+            bookingTime: currentDate || bookingTime,
         },
     };
 
@@ -38,6 +37,6 @@ const handler = async (event) => {
     }
 };
 
-export const addEvents = middy(handler)
+export const bookTickets = middy(handler)
     .use(httpJsonBodyParser())
     .use(httpErrorHandler());

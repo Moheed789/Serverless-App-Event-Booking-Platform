@@ -24,9 +24,8 @@ const generateUpdateQuery = (data) => {
     return exp;
 };
 
-export const updateResume = async (userId, args) => {
+const updateEventPlanner = async (userId, args) => {
     const expression = generateUpdateQuery(args);
-    console.log("args,,,", args);
     const params = {
         TableName: tableName,
         Key: {
@@ -38,15 +37,16 @@ export const updateResume = async (userId, args) => {
 
     try {
         const response = await dynamoDB.update(params).promise();
-        return response.Attributes;
+            return response.Attributes;
     } catch (error) {
-        console.log("xxxxxxxxxx resume not updated xxxxxxxxxxxxx", error);
-        throw error;
+        console.error("Error updating Event Planner User:", error);
+        throw new Error("Failed to update Event Planner User");
     }
 };
 
 const handler = async (event) => {
-    console.log("Event", JSON.stringify(event));
+    console.log("Event:", JSON.stringify(event));
+
     const userId = event.queryStringParameters.id;
     const {
         bio,
@@ -71,22 +71,29 @@ const handler = async (event) => {
     };
 
     try {
-        const updatedUser = await updateResume(userId, args);
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: "Edit Event Planner User Successfully done.",
-                data: updatedUser
-            }),
-        };
+        const updatedUser = await updateEventPlanner(userId, args);
+        if (updatedUser) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: "Edit Event Planner User Successfully done.",
+                    data: updatedUser
+                }),
+            };
+        } else {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({
+                    message: "Please enter a valid id"
+                })
+            };
+        }
     } catch (error) {
-        console.log("error", error);
-        throw error;
+        console.error('Error:', error);
+        throw new Error("Internal Server Error");
     }
 };
 
 export const eventPlannerUser = middy(handler)
     .use(httpJsonBodyParser())
     .use(httpErrorHandler());
-
-export default eventPlannerUser;

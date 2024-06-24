@@ -9,11 +9,19 @@ const handler = async (event) => {
     const dynamodb = new AWS.DynamoDB.DocumentClient();
     const tableName = process.env.events_table_name;
     const { eventName, location, country, city, date, time } = event.body;
+    const eventId = event.pathParameters?.eventId;
+
+    if (!eventId) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                message: "eventId is required"
+            })
+        };
+    }
 
     const currentDate = dayjs().format('DD-MM-YYYY');
     const currentTime = dayjs().format('HH:mm:ss');
-
-    const eventId = event.pathParameters?.eventId;
 
     try {
         const result = await dynamodb.update({
@@ -38,22 +46,28 @@ const handler = async (event) => {
             },
             ReturnValues: "ALL_NEW",
         }).promise();
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: "Event Edit Successfully",
-                updatedEvent: result.Attributes,
-            }),
-        };
+        if (result) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: "Event Edit Successfully",
+                    updatedEvent: result.Attributes,
+                }),
+            };
+        } else {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Event Not Update",
+                }),
+            };
+        }
     } catch (error) {
         console.error(error);
-        throw error
+        throw new Error("Internal Server Error");
     }
 };
 
 export const editEventPlanner = middy(handler)
     .use(httpJsonBodyParser())
     .use(httpErrorHandler());
-
-export default editEventPlanner;
