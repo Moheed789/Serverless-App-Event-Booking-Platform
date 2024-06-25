@@ -9,9 +9,10 @@ const handler = async (event) => {
     const dynamodb = new AWS.DynamoDB.DocumentClient();
     const ticketsTableName = process.env.tickets_table_name;
     const userId = event.requestContext.authorizer.claims.sub;
-    const { eventId, quantity, totalPrice, bookingTime } = event.body;
+    const { eventId, quantity, totalPrice, bookingDate, bookingTime } = event.body;
     const ticketId = uuidv4();
-    const currentDate = new Date().toISOString();
+    const currentDate = new Date().toDateString();
+    const currentTime = new Date().toTimeString();
 
     const params = {
         TableName: ticketsTableName,
@@ -21,7 +22,8 @@ const handler = async (event) => {
             userId: userId,
             quantity: quantity,
             totalPrice: totalPrice,
-            bookingTime: currentDate || bookingTime,
+            bookingDate: currentDate || bookingDate,
+            bookingTime: currentTime || bookingTime
         },
     };
 

@@ -8,7 +8,7 @@ const handler = async (event) => {
     console.log("Event", event);
     const dynamodb = new AWS.DynamoDB.DocumentClient();
     const tableName = process.env.events_table_name;
-    const { eventName, location, country, city, time, date } = event.body;
+    const { eventName, location, country, city, eventTime, eventDate } = event.body;
     const userId = event.requestContext.authorizer.claims.sub;
     const eventId = uuidv4();
 
@@ -21,8 +21,8 @@ const handler = async (event) => {
             location: location,
             country: country,
             city: city,
-            date: date,
-            time: time,
+            eventDate: eventDate,
+            eventTime: eventTime,
         },
     };
 

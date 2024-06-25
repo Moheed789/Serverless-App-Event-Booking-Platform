@@ -8,7 +8,7 @@ const handler = async (event) => {
     console.log("event", event);
     const dynamodb = new AWS.DynamoDB.DocumentClient();
     const tableName = process.env.events_table_name;
-    const { eventName, location, country, city, date, time } = event.body;
+    const { eventName, location, country, city, eventDate, eventTime } = event.body;
     const eventId = event.pathParameters?.eventId;
 
     if (!eventId) {
@@ -27,22 +27,22 @@ const handler = async (event) => {
         const result = await dynamodb.update({
             TableName: tableName,
             Key: { eventId },
-            UpdateExpression: 'set #eventName = :eventName, #location = :location, #country = :country, #city = :city, #date = :date, #time = :time',
+            UpdateExpression: 'set #eventName = :eventName, #location = :location, #country = :country, #city = :city, #eventDate = :eventDate, #eventTime = :eventTime',
             ExpressionAttributeNames: {
                 '#eventName': 'eventName',
                 '#location': 'location',
                 '#country': 'country',
                 '#city': 'city',
-                '#date': 'date',
-                '#time': 'time',
+                '#eventDate': 'eventDate',
+                '#eventTime': 'eventTime',
             },
             ExpressionAttributeValues: {
                 ':eventName': eventName,
                 ':location': location,
                 ':country': country,
                 ':city': city,
-                ':date': currentDate || date,
-                ':time': currentTime || time,
+                ':eventDate': currentDate || eventDate,
+                ':eventTime': currentTime || eventTime,
             },
             ReturnValues: "ALL_NEW",
         }).promise();

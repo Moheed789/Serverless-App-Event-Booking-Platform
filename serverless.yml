@@ -223,6 +223,15 @@ functions:
     environment:
       tickets_table_name: bookingTicketSystem
 
+  # Stripe Payment Functionality
+  createCheckoutSession:
+    handler: functions/payment_section/stripe.createPaymentSession
+    events:
+      - http:
+          path: create-checkout-session
+          method: POST
+          cors: true
+
 # Resources
 resources:
   Resources:
