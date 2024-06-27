@@ -8,7 +8,7 @@ const stripeClient = stripe('sk_test_51MXQSyHXd9MVqwiMTk84eP6MeSxcFySjsLIFRTFtFZ
 const createCheckoutSession = async (event) => {
     console.log("Events", event);
     try {
-        const { amount, currency, return_url, success_url, quantity } = event.body;
+        const { product_name, amount, currency, cancel_url, success_url, quantity, image_url } = event.body;
         const session = await stripeClient.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
@@ -16,7 +16,8 @@ const createCheckoutSession = async (event) => {
                     price_data: {
                         currency: currency,
                         product_data: {
-                            name: 'iPhone',
+                            name: product_name,
+                            images: [image_url],
                         },
                         unit_amount: amount,
                     },
@@ -25,7 +26,7 @@ const createCheckoutSession = async (event) => {
             ],
             mode: 'payment',
             success_url: success_url,
-            cancel_url: return_url,
+            cancel_url: cancel_url,
         });
 
         console.log("Payment Session", session.url);

@@ -232,6 +232,15 @@ functions:
           method: POST
           cors: true
 
+  # Web Hook Functionality
+  createWebHookEndPoints:
+    handler: functions/payment_section/webhook.createWebHook
+    events:
+      - http:
+          path: create-webhook-endpoint
+          method: POST
+          cors: true
+
 # Resources
 resources:
   Resources:
