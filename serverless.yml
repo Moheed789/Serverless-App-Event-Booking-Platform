@@ -241,6 +241,15 @@ functions:
           method: POST
           cors: true
 
+  # Add WebHook With Stripe Functionality
+  webhook:
+    handler: functions/payment_section/stripeWebHook.stripeWebhook
+    events:
+      - http:
+          path: webhook
+          method: POST
+          cors: true
+
 # Resources
 resources:
   Resources:

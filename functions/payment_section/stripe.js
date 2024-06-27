@@ -3,12 +3,12 @@ import middy from '@middy/core';
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 import httpErrorHandler from '@middy/http-error-handler';
 
-const stripeClient = stripe('sk_test_51MXQSyHXd9MVqwiMTk84eP6MeSxcFySjsLIFRTFtFZEXxfoCjrWasrGDFtmfqROLlHwxAgH9xXoX1DtgtBqDdo4O00es6GXXKl');
+const stripeClient = stripe('sk_test_51PVwwzF9KYbNnXisY7rZGpkUfoiVNiXhqkT3S5HizIzsUKpkgCxvl7rziVcNUU5U7TFLXQI5UQln6pe1rCKmr7Co00kmjz47vo');
 
 const createCheckoutSession = async (event) => {
     console.log("Events", event);
     try {
-        const { product_name, amount, currency, cancel_url, success_url, quantity, image_url } = event.body;
+        const { product_name, amount, currency, quantity, image_url } = event.body;
         const session = await stripeClient.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
@@ -25,8 +25,8 @@ const createCheckoutSession = async (event) => {
                 },
             ],
             mode: 'payment',
-            success_url: success_url,
-            cancel_url: cancel_url,
+            success_url: 'https://google.com',
+            cancel_url: 'https://example.com/cancel',
         });
 
         console.log("Payment Session", session.url);
