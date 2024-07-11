@@ -1,0 +1,489 @@
+service: Serverless-event-booking-platform
+
+frameworkVersion: '3'
+
+# Provider
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  profile: Moheed
+
+# Functions
+functions:
+  # Event Planner Flow
+
+  # Get One Event Planner
+  getEventPlanner:
+    handler: functions/event_planner/getOneEventPlanner.handler
+    events:
+      - http:
+          path: /get-one-event-planner
+          method: GET
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+    
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource:
+          - Fn::GetAtt: [EventPlannerTable, Arn]
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+
+  # Update Event Planner using by userId 
+  updateProfile:
+    handler: functions/event_planner/updateEventPlanner.handler
+    events:
+      - http:
+          path: /edit-event-planner
+          method: PUT
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - Fn::GetAtt: [EventPlannerTable, Arn]
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+
+  # Post Confirmation Flow
+  postFunction:
+    handler: trigger/postConfirmation.handler
+    events:
+      - cognitoUserPool:
+          pool: us-east-1_Gdlj8Z0v6
+          trigger: PostConfirmation
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action: 
+          - cognito-idp:AdminAddUserToGroup
+          - cognito-idp:AmazonCognitoPowerUser
+          - dynamodb:PutItem
+        Resource:
+          - !Sub arn:aws:cognito-idp:us-east-1:654654320621:userpool/us-east-1_Gdlj8Z0v6
+          - Fn::GetAtt: [UserTicketPurchaser, Arn]
+          - Fn::GetAtt: [EventPlannerTable, Arn]
+    
+    # Environment Variables 
+    environment:
+      event_planner_table: moheedEventPlanner
+      event_group_name: eventPlanner
+      user_bookings_table_name: moheedTicketPurchaser
+      group_name: userTicketPurchaser
+
+  # Events Flow with CRUD Operation
+
+  # Create Event
+  createEventData:
+    handler: functions/event_data/createEvent.handler
+    events:
+      - http:
+          path: /create-event
+          method: POST
+          cors: true
+          authorizer:
+            name: CognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+  # Get Event using by GSI
+  getEventData:
+    handler: functions/event_data/getOneEvent.handler
+    events:
+      - http:
+          path: /get-event
+          method: GET
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:Scan
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+          - !Sub arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData/index/event-planner-index
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+      index_name: event-planner-index
+
+  # Update Event using by eventId
+  updateEventData:
+    handler: functions/event_data/updateEvent.handler
+    events:
+      - http:
+          path: /edit-event/{eventId}
+          method: PUT
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+  # Delete Event using by eventId
+  deleteEventData:
+    handler: functions/event_data/deleteEvent.handler
+    events:
+      - http:
+          path: /delete-event/{eventId}
+          method: DELETE
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+          - dynamodb:GetItem
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+  # Delete Events using by GSI
+  UserDeleteEvents:
+    handler: functions/event_data/DeleteEventsbyUserId.handler
+    events:
+      - http:
+          path: /delete-event
+          method: DELETE
+          cors: true
+          authorizer:
+            name: CognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+          - dynamodb:Query
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+          - !Sub arn:aws:dynamodb:us-east-1:654654320621:table/eventPlannerData/index/event-planner-index
+
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+      index_name: event-planner-index
+
+  
+  # Booking Ticket System Flow
+
+  # Update booking ticket
+  createBookSeat:
+    handler: functions/booking_system/booking_seat.handler
+    events:
+      - http:
+          path: /create-bookingTicket
+          method: POST
+          cors: true
+          authorizer:
+              name: CognitoAuthorizer
+              type: COGNITO_USER_POOLS
+              arn: !GetAtt CognitoUserPool.Arn
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource:
+          - Fn::GetAtt: [BookingTicket, Arn]
+    
+    # Environment Variables
+    environment:
+      tickets_table_name: bookingTicketSystem
+
+  # Stripe Payment Functionality
+  checkoutSession:
+    handler: functions/payment_section/stripe.handler
+    events:
+      - http:
+          path: create-checkout-session
+          method: POST
+          cors: true
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - ssm:GetParameters*
+        Resource:
+          - !Sub arn:aws:ssm:us-east-1:654654320621:parameter/moheed/stripe/secret
+
+    # Environment Variables
+    environment:
+      stripe_secret_key: ${ssm:/moheed/stripe/secret}
+
+  # Add WebHook With Stripe Functionality
+  webhook:
+    handler: functions/payment_section/stripeWebHook.handler
+    events:
+      - http:
+          path: /webhook
+          method: POST
+          cors: true
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:UpdateItem
+          - dynamodb:PutItem
+        Resource:
+          - Fn::GetAtt: [UserTicketPurchaser, Arn]
+          - Fn::GetAtt: [EventPlannerTable, Arn]
+      - Effect: Allow
+        Action:
+          - ssm:GetParameters*
+        Resource:
+          - !Sub arn:aws:ssm:us-east-1:654654320621:parameter/moheed/stripe/secret
+          - !Sub arn:aws:ssm:us-east-1:654654320621:parameter/moheed/stripe/webhook/secret
+
+    
+    # Environment Variables 
+    environment:
+      stripe_secret_key: ${ssm:/moheed/stripe/secret}
+      webhook_secret_key: ${ssm:/moheed/stripe/webhook/secret}
+      events_table_name: eventPlannerData
+      user_bookings_table_name: moheedTicketPurchaser
+
+
+  # Get One User Book Event
+  getBookEvent:
+    handler: functions/payment_section/getBookEventUser.handler
+    events:
+      - http:
+          path: /get-user-book-events/{eventId}
+          method: GET
+          cors: true
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource:
+          - Fn::GetAtt: [EventsTable, Arn]
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+  # DynamoDB Stream Flow
+
+  # Insert DynamoDB Stream
+  StreamInsert:
+    handler: functions/dynamodb_stream/insertStream.handler
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [EventsTable, StreamArn]
+          batchSize: 10
+          startingPosition: LATEST
+          enabled: true
+
+    # IAM Role Statements
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DescribeStream
+          - dynamodb:GetRecords
+          - dynamodb:GetShardIterator
+          - dynamodb:ListStreams
+        Resource:
+          - Fn::GetAtt: [EventsTable, StreamArn]
+    
+    # Environment Variables
+    environment:
+      events_table_name: eventPlannerData
+
+# Resources
+resources:
+  Resources:
+
+    # Create DynamoDB Table for Event Planner
+    EventPlannerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: moheedEventPlanner
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # Create DynamoDB Table for User Ticket Buyer
+    UserTicketPurchaser:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: moheedTicketPurchaser
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    # Create DynamoDB Table for Event Data
+    EventsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: eventPlannerData
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        AttributeDefinitions:
+          - AttributeName: eventId
+            AttributeType: S
+          - AttributeName: eventPlannerId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: eventId
+            KeyType: HASH
+          - AttributeName: eventPlannerId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: event-planner-index
+            KeySchema:
+              - AttributeName: eventPlannerId
+                KeyType: HASH
+              - AttributeName: eventId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    # Create DynamoDB Table for Booking Ticket
+    BookingTicket:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: bookingTicketSystem
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ticketId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ticketId
+            KeyType: HASH
+
+    # Create Cognito User Pool
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AutoVerifiedAttributes:
+          - email
+        UsernameAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+        Schema:
+          - AttributeDataType: String
+            Name: email
+            Mutable: true
+            Required: true
+          - AttributeDataType: String
+            Name: given_name
+            Mutable: true
+            Required: true
+          - AttributeDataType: String
+            Name: family_name
+            Mutable: true
+            Required: true
+          
+    #  Create Cognito Client
+    WebCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: client
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+
+    # Event Planner Group
+    EventPlannerGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: "eventPlanner"
+        UserPoolId: !Ref CognitoUserPool
+
+    # User Ticket Buyer Group
+    UserTicketPurchaserGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: "userTicketPurchaser"
+        UserPoolId: !Ref CognitoUserPool
+
+# Plugins
+plugins:
+  - serverless-export-env
+  - serverless-iam-roles-per-function
